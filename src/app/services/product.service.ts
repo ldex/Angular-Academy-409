@@ -16,6 +16,8 @@ import {
 } from 'rxjs';
 import { Product } from '../products/product.interface';
 import { environment } from 'src/environments/environment';
+import { LoadingService } from './loading.service';
+import { log, logWithPrefix } from '../log.operator';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +26,10 @@ export class ProductService {
   private baseUrl: string = `${environment.apiUrl}/products`;
   products$: Observable<Product[]>;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private loadingService: LoadingService,
+  ) {
     this.initProducts();
   }
 
@@ -40,7 +45,13 @@ export class ProductService {
 
     this.products$ = this.http
       .get<Product[]>(this.baseUrl, options)
-      .pipe(delay(1500), tap(console.table));
+      .pipe(
+        delay(1500), // pour la démo...
+        logWithPrefix("Products: "),
+        shareReplay()
+      );
+
+      this.loadingService.showLoaderUntilCompleted(this.products$);
   }
 
   insertProduct(newProduct: Product): Observable<Product> {
